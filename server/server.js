@@ -6,11 +6,13 @@ const http = require("node:http");
 const numCPUs = require("node:os").availableParallelism();
 const process = require("node:process");
 const { setupMaster, setupWorker } = require("@socket.io/sticky");
-const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
+const { setupPrimary } = require("@socket.io/cluster-adapter");
+const { createAdapter } = require("@socket.io/redis-adapter");
+const { createClient } = require("redis");
 const { Server } = require("socket.io");
 const { info } = require("node:console");
 const express = require("express");
-const redisAdapter = require('socket.io-redis');
+const redisAdapter = require("@socket.io/redis-adapter");
 
 const cors = require("cors"); // Import the cors middleware
 
@@ -92,7 +94,23 @@ if (cluster.isMaster) {
   );
 
   // you might need some different kind of adapter here
-  io.adapter(createAdapter());
+  // io.adapter(createAdapter());
+
+  const pubClient = createClient({
+    url: "rediss://red-cl1tce3mgg9c73e8p9m0:M3lN8K9hk9iLO2beOsJjXLSQJ5rFkV1z@oregon-redis.render.com:6379",
+  });
+  const subClient = pubClient.duplicate();
+
+  Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+    io.adapter(createAdapter(pubClient, subClient));
+    // io.listen(3000);
+  });
+
+  // io.adapter(
+  //   redisAdapter(
+  //     "rediss://red-cl1tce3mgg9c73e8p9m0:M3lN8K9hk9iLO2beOsJjXLSQJ5rFkV1z@oregon-redis.render.com:6379"
+  //   )
+  // );
   // io.adapter(createAdapter(redisClient));
 
   setupWorker(io);
