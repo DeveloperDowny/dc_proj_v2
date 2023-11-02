@@ -58,8 +58,8 @@ if (cluster.isMaster) {
 
   httpServer.listen(3001);
 
-  // for (let i = 0; i < numCPUs; i++) {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < numCPUs; i++) {
+  // for (let i = 0; i < 3; i++) {
     cluster.fork();
   }
 
